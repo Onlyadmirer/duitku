@@ -15,13 +15,34 @@ const indexRoute = createRoute({
   component: () => <h1>Home</h1>,
 });
 
-const aboutRoute = createRoute({
+const transaksi = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/about",
+  path: "/transaksi",
+  component: () => <h1>About</h1>,
+});
+const tambahTransaksi = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/tambah-transaksi",
+  component: () => <h1>About</h1>,
+});
+const anggaran = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/anggaran",
+  component: () => <h1>About</h1>,
+});
+const lainnya = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/lainnya",
   component: () => <h1>About</h1>,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, aboutRoute]);
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  transaksi,
+  tambahTransaksi,
+  anggaran,
+  lainnya,
+]);
 
 export const router = createRouter({ routeTree });
 
