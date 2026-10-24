@@ -14,7 +14,7 @@ function App() {
         <Outlet />
       </main>
 
-      <section>
+      <section className='flex w-full justify-center px-4'>
         <Mobile />
       </section>
     </>
