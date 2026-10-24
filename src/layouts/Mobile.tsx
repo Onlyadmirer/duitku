@@ -3,7 +3,7 @@ import { ChartPie, House, LayoutGrid, Plus, ReceiptText } from "lucide-react";
 
 function Mobile() {
   return (
-    <div className='flex-row rounded-2xl flex fixed bottom-0 w-full bg-neutral-200 text-xs py-4 justify-between '>
+    <div className='flex-row rounded-2xl flex fixed bottom-0 w-full bg-neutral-300 text-xs py-4 justify-between '>
       <Link to='/' className='flex flex-col justify-center flex-1 items-center'>
         <House size={24} />
         Beranda

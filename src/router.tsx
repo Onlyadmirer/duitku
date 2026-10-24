@@ -4,6 +4,7 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import App from "./App";
+import home from "./pages/home/Home";
 
 const rootRoute = createRootRoute({
   component: App,
@@ -12,7 +13,7 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: () => <h1>Home</h1>,
+  component: home,
 });
 
 const transaksi = createRoute({
