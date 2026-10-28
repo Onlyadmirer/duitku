@@ -1,4 +1,5 @@
 import { Outlet } from "@tanstack/react-router";
+import { Bell } from "lucide-react";
 import Mobile from "./layouts/Mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar";
 
@@ -22,10 +23,20 @@ function App() {
               </span>
             </div>
           </div>
-          <Avatar size='lg'>
-            <AvatarImage src='https://github.com/shadcn.png' alt='@shadcn' />
-            <AvatarFallback>AK</AvatarFallback>
-          </Avatar>
+          <div className='flex items-center gap-1'>
+            <button
+              type='button'
+              aria-label='Notifikasi'
+              className='relative flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-surface-container'
+            >
+              <Bell size={20} />
+              <span className='absolute top-2.5 right-2.5 size-2 rounded-full bg-destructive ring-2 ring-background' />
+            </button>
+            <Avatar size='lg'>
+              <AvatarImage src='https://github.com/shadcn.png' alt='@shadcn' />
+              <AvatarFallback>AK</AvatarFallback>
+            </Avatar>
+          </div>
         </nav>
       </header>
 
