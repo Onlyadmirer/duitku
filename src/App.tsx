@@ -5,36 +5,35 @@ import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar";
 function App() {
   return (
     <>
-      <header className='py-4 shadow-xs shadow-accent/20'>
-        <nav className='flex flex-row items-center px-4 mx-auto justify-between max-w-7xl '>
-          <div className='flex flex-row gap-2 justify-center items-center'>
+      <header className='sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-xl'>
+        <nav className='mx-auto flex w-full max-w-[480px] items-center justify-between px-4 py-3'>
+          <div className='flex items-center gap-2.5'>
             <img
               src='/image.png'
               alt='logo'
-              className='w-12 h-12 bg-background p-2 rounded-2xl'
+              className='size-10 rounded-xl object-contain'
             />
-            <span className='font-sans font-semibold text-2xl text-accent leading-loose'>
-              Duitku
-            </span>
+            <div className='flex flex-col'>
+              <span className='text-base leading-tight font-semibold text-primary'>
+                Duitku
+              </span>
+              <span className='text-[11px] leading-tight font-medium text-muted-foreground'>
+                Beranda
+              </span>
+            </div>
           </div>
           <Avatar size='lg'>
-            <AvatarImage
-              src='https://github.com/shadcn.png'
-              alt='@shadcn'
-              className='grayscale'
-            />
-            <AvatarFallback>CN</AvatarFallback>
+            <AvatarImage src='https://github.com/shadcn.png' alt='@shadcn' />
+            <AvatarFallback>AK</AvatarFallback>
           </Avatar>
         </nav>
       </header>
 
-      <main className='mx-auto px-5 py-6 h-screen max-w-7xl'>
+      <main className='mx-auto min-h-screen w-full max-w-[480px] px-4 pt-4 pb-28'>
         <Outlet />
       </main>
 
-      <section className='flex w-full bg-amber-400 justify-center px-4'>
-        <Mobile />
-      </section>
+      <Mobile />
     </>
   );
 }

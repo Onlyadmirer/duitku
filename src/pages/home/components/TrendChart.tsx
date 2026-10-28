@@ -64,8 +64,8 @@ const rupiah = (n: number) =>
 const singkat = (n: number) =>
   new Intl.NumberFormat("id-ID", { notation: "compact" }).format(n);
 
-const COLOR_INCOME = "#16a34a";
-const COLOR_EXPENSE = "#e11d48";
+const COLOR_INCOME = "var(--chart-2)";
+const COLOR_EXPENSE = "var(--chart-3)";
 
 type TooltipProps = {
   active?: boolean;
@@ -76,7 +76,7 @@ type TooltipProps = {
 function ChartTooltip({ active, label, payload }: TooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className='rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm shadow-md dark:border-neutral-700 dark:bg-neutral-900'>
+    <div className='rounded-lg border border-border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md'>
       <p className='mb-1 font-medium'>{label ? labelBulan(label) : ""}</p>
       {payload.map((p) => (
         <p key={p.name} className='flex items-center gap-2'>
@@ -84,9 +84,7 @@ function ChartTooltip({ active, label, payload }: TooltipProps) {
             className='inline-block size-2 rounded-full'
             style={{ backgroundColor: p.color }}
           />
-          <span className='text-neutral-500 dark:text-neutral-400'>
-            {p.name}
-          </span>
+          <span className='text-muted-foreground'>{p.name}</span>
           <span className='ml-auto pl-4 font-medium tabular-nums'>
             {rupiah(p.value ?? 0)}
           </span>
@@ -98,8 +96,8 @@ function ChartTooltip({ active, label, payload }: TooltipProps) {
 
 export function TrendChart({ data = SAMPLE_DATA }: { data?: TrendPoint[] }) {
   return (
-    <section className='rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800'>
-      <h2 className='mb-3 text-base text-accent font-semibold'>
+    <section className='rounded-2xl border border-border/60 bg-surface-container-lowest p-4'>
+      <h2 className='mb-3 text-base font-bold tracking-tight text-foreground'>
         Tren 12 bulan
       </h2>
 
@@ -114,31 +112,40 @@ export function TrendChart({ data = SAMPLE_DATA }: { data?: TrendPoint[] }) {
             >
               <CartesianGrid
                 vertical={false}
-                stroke='#ffffff'
-                strokeOpacity={0.12}
+                stroke='var(--border)'
+                strokeOpacity={0.6}
               />
               <XAxis
                 dataKey='month'
                 tickFormatter={labelBulan}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "#ffffff", fillOpacity: 0.6, fontSize: 12 }}
+                tick={{
+                  fill: "var(--muted-foreground)",
+                  fontSize: 12,
+                }}
               />
               <YAxis
                 tickFormatter={singkat}
                 width={44}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "#ffffff", fillOpacity: 0.6, fontSize: 12 }}
+                tick={{
+                  fill: "var(--muted-foreground)",
+                  fontSize: 12,
+                }}
               />
               <Tooltip
                 content={<ChartTooltip />}
-                cursor={{ fill: "currentColor", fillOpacity: 0.06 }}
+                cursor={{ fill: "var(--foreground)", fillOpacity: 0.05 }}
               />
               <Legend
                 iconType='circle'
                 iconSize={8}
-                wrapperStyle={{ fontSize: 12 }}
+                wrapperStyle={{
+                  fontSize: 12,
+                  color: "var(--muted-foreground)",
+                }}
               />
               <Bar
                 dataKey='income'
