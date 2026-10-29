@@ -16,6 +16,7 @@ import type {
   TrendPoint,
   User,
   Wallet,
+  WalletBalance,
   WalletBalances,
   WalletInput,
 } from "@/types/api";
@@ -98,7 +99,9 @@ api.interceptors.response.use(
   (response) => {
     const payload = response.data as Record<string, unknown>;
     if (payload && typeof payload === "object" && "success" in payload) {
-      return { ...response, data: payload.data };
+      // Sebagian endpoint (mis. laporan) memakai `items` alih-alih `data`.
+      if ("data" in payload) return { ...response, data: payload.data };
+      if ("items" in payload) return { ...response, data: payload.items };
     }
     return response;
   },
@@ -221,11 +224,20 @@ const monthKey = (value: unknown, year: number) => {
 };
 
 const normalizeTrend = (data: unknown, year: number): TrendPoint[] => {
-  const items = Array.isArray(data)
-    ? data
-    : data && typeof data === "object" && "items" in data && Array.isArray(data.items)
-      ? data.items
-      : [];
+  const items = (() => {
+    if (Array.isArray(data)) return data;
+    if (!data || typeof data !== "object") return [];
+    const row = data as Record<string, unknown>;
+    if (Array.isArray(row.months)) return row.months;
+    if (Array.isArray(row.items)) return row.items;
+    const nested = row.items;
+    if (nested && typeof nested === "object") {
+      const inner = nested as Record<string, unknown>;
+      if (Array.isArray(inner.months)) return inner.months;
+      if (Array.isArray(inner.items)) return inner.items;
+    }
+    return [];
+  })();
   return items.map((item, index) => {
     const point = item as Record<string, unknown>;
     const income = Number(point.income ?? point.totalIncome ?? 0);
@@ -252,44 +264,109 @@ const normalizeCategoryReport = (data: unknown, month: string): CategoryReport =
       categoryId: String(entry.categoryId ?? nested?.id ?? entry.id ?? ""),
       name: String(entry.name ?? entry.categoryName ?? nested?.name ?? "Lainnya"),
       color: String(entry.color ?? nested?.color ?? "#64748B"),
-      total: Number(entry.total ?? entry.amount ?? 0),
-      percentage: Number(entry.percentage ?? 0),
+      total: Number(entry.total ?? entry.spent ?? entry.amount ?? 0),
+      percentage: Number(entry.percentage ?? entry.percent ?? 0),
     };
   };
 
+  let period = month;
+  let rawItems: unknown[] = [];
+
   if (Array.isArray(data)) {
-    const items = data.map(mapItem).sort((a, b) => b.total - a.total);
-    const total = items.reduce((sum, item) => sum + item.total, 0);
-    return { month, total, items };
+    rawItems = data;
+  } else if (data && typeof data === "object") {
+    const row = data as Record<string, unknown>;
+    period = String(row.month ?? month);
+    if (Array.isArray(row.items)) {
+      rawItems = row.items;
+    } else if (row.items && typeof row.items === "object") {
+      // Backend membungkus laporan: { items: { month, items } }.
+      const nested = row.items as Record<string, unknown>;
+      period = String(nested.month ?? row.month ?? month);
+      rawItems = Array.isArray(nested.items) ? nested.items : [];
+    }
   }
-  const row = (data ?? {}) as Record<string, unknown>;
-  const rawItems = Array.isArray(row.items) ? row.items : [];
-  const items = rawItems.map(mapItem).sort((a, b) => b.total - a.total);
-  return {
-    month: String(row.month ?? month),
-    total: Number(row.total ?? items.reduce((sum, item) => sum + item.total, 0)),
-    items,
-  };
+
+  const items = rawItems
+    .map(mapItem)
+    .filter((item) => item.total > 0)
+    .sort((a, b) => b.total - a.total);
+  const total = items.reduce((sum, item) => sum + item.total, 0);
+
+  return { month: period, total, items };
 };
 
 const normalizeWalletBalances = (data: unknown): WalletBalances => {
   const row = (data ?? {}) as Record<string, unknown>;
-  const rawItems = Array.isArray(data) ? data : Array.isArray(row.items) ? row.items : [];
-  const items = rawItems.map((item) => {
+  const rawItems = Array.isArray(data)
+    ? data
+    : Array.isArray(row.items)
+      ? row.items
+      : Array.isArray(row.wallets)
+        ? row.wallets
+        : Array.isArray(row.balances)
+          ? row.balances
+          : [];
+
+  // Backend mengelompokkan per (dompet, tipe transaksi), sehingga satu dompet
+  // bisa muncul lebih dari sekali. Gabungkan agar saldo tidak dihitung ganda.
+  type Accumulator = WalletBalance & {
+    income: number;
+    expense: number;
+    hasSplit: boolean;
+  };
+  const merged = new Map<string, Accumulator>();
+
+  for (const item of rawItems) {
     const entry = (item ?? {}) as Record<string, unknown>;
-    const nested =
+    const wallet =
       entry.wallet && typeof entry.wallet === "object"
         ? (entry.wallet as Record<string, unknown>)
         : undefined;
-    return {
-      walletId: String(entry.walletId ?? nested?.id ?? entry.id ?? ""),
-      name: String(entry.name ?? nested?.name ?? "Dompet"),
-      initialBalance: Number(entry.initialBalance ?? nested?.initialBalance ?? 0),
-      balance: Number(entry.balance ?? entry.currentBalance ?? 0),
-    };
-  });
+    const walletId = String(entry.walletId ?? wallet?.id ?? entry.id ?? "");
+    if (!walletId) continue;
+
+    const income = Number(entry.income ?? 0);
+    const expense = Number(entry.expense ?? 0);
+    const hasSplit = "income" in entry || "expense" in entry;
+    const balance = Number(entry.balance ?? entry.currentBalance ?? 0);
+    const name = String(entry.name ?? wallet?.name ?? "Dompet");
+    const initialBalance = Number(entry.initialBalance ?? wallet?.initialBalance ?? 0);
+
+    const existing = merged.get(walletId);
+    if (!existing) {
+      merged.set(walletId, {
+        walletId,
+        name,
+        initialBalance,
+        balance,
+        income,
+        expense,
+        hasSplit,
+      });
+      continue;
+    }
+
+    existing.income += income;
+    existing.expense += expense;
+    existing.hasSplit = existing.hasSplit || hasSplit;
+    existing.balance = balance;
+    if (existing.name === "Dompet") existing.name = name;
+  }
+
+  const items: WalletBalance[] = [...merged.values()].map(
+    ({ income, expense, hasSplit, ...item }) => ({
+      ...item,
+      balance: hasSplit ? item.initialBalance + income - expense : item.balance,
+    }),
+  );
+
   return {
-    total: Number(row.total ?? items.reduce((sum, item) => sum + item.balance, 0)),
+    total: Number(
+      row.total ??
+        row.totalBalance ??
+        items.reduce((sum, item) => sum + item.balance, 0),
+    ),
     items,
   };
 };
