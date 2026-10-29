@@ -25,6 +25,10 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-income: var(--income);
+  --color-income-soft: var(--income-soft);
+  --color-expense: var(--expense);
+  --color-expense-soft: var(--expense-soft);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
@@ -79,6 +83,10 @@
   --accent: #e5eeff;
   --accent-foreground: #0b1c30;
   --destructive: #ba1a1a;
+  --income: #006c49;
+  --income-soft: #e7f8f0;
+  --expense: #ba1a1a;
+  --expense-soft: #fff0ef;
   --success: #006c49;
   --success-foreground: #ffffff;
   --warning: #b45309;
@@ -127,6 +135,10 @@
   --accent: #24374f;
   --accent-foreground: #eaf1ff;
   --destructive: #ffb4ab;
+  --income: #4edea3;
+  --income-soft: #0d3326;
+  --expense: #ffb4ab;
+  --expense-soft: #3d1514;
   --success: #4edea3;
   --success-foreground: #002113;
   --warning: #fbbf24;

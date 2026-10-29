@@ -1,11 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#3525CD" />
+    <meta
+      name="description"
+      content="Duitku - catat pemasukan, pengeluaran, dompet, dan anggaran dalam satu tempat."
+    />
     <link href="/src/style.css" rel="stylesheet" />
-    <title>duitku</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("duitku-theme") || "system";
+          var dark =
+            stored === "dark" ||
+            (stored === "system" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+          document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        } catch (error) {}
+      })();
+    </script>
+    <title>Duitku — Catat uangmu, tenang hidupmu</title>
   </head>
   <body>
     <div id="root"></div>

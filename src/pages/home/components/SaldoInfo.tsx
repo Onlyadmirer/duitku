@@ -1,13 +1,22 @@
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Banknote, Eye, Landmark, Wallet } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { WalletIcon } from "@/components/app/common";
+import { formatCompactRupiah, formatRupiah } from "@/lib/format";
+import type { WalletBalance } from "@/types/api";
 
-const wallets = [
-  { icon: Banknote, name: "Tunai", amount: "Rp 850.000" },
-  { icon: Landmark, name: "BCA", amount: "Rp 9.250.000" },
-  { icon: Wallet, name: "GoPay", amount: "Rp 1.500.000" },
-];
+function SaldoInfo({
+  total,
+  wallets,
+  loading,
+}: {
+  total: number;
+  wallets: WalletBalance[];
+  loading?: boolean;
+}) {
+  const [hidden, setHidden] = useState(false);
 
-function SaldoInfo() {
   return (
     <Card className='relative gap-4 overflow-hidden rounded-2xl border-0 bg-gradient-to-br from-primary via-primary to-primary-container px-5 py-5 text-primary-foreground ring-0 shadow-[0_12px_28px_-6px_rgba(79,70,229,0.35)]'>
       <div className='pointer-events-none absolute -top-8 -right-8 size-40 rounded-full bg-primary-foreground/15 blur-2xl' />
@@ -20,34 +29,63 @@ function SaldoInfo() {
           </span>
           <button
             type='button'
-            aria-label='Tampilkan saldo'
+            onClick={() => setHidden((current) => !current)}
+            aria-label={hidden ? "Tampilkan saldo" : "Sembunyikan saldo"}
+            aria-pressed={hidden}
             className='flex size-8 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground transition-colors hover:bg-primary-foreground/20'
           >
-            <Eye size={18} />
+            {hidden ? <EyeOff size={17} /> : <Eye size={17} />}
           </button>
         </div>
 
-        <p className='text-[28px] leading-9 font-bold tracking-tight tabular-nums'>
-          Rp 11.600.000
-        </p>
+        {loading ? (
+          <Skeleton className='h-9 w-48 bg-primary-foreground/20' />
+        ) : (
+          <p className='text-[28px] leading-9 font-bold tracking-tight tabular-nums'>
+            {hidden ? "••••••••" : formatRupiah(total)}
+          </p>
+        )}
 
-        <div className='grid grid-cols-3 gap-2 border-t border-primary-foreground/15 pt-3.5'>
-          {wallets.map(({ icon: Icon, name, amount }) => (
-            <div
-              key={name}
-              className='flex min-w-0 flex-col gap-0.5 rounded-xl bg-primary-foreground/10 p-2.5 backdrop-blur-sm'
-            >
-              <div className='flex items-center gap-1 text-primary-foreground/80'>
-                <Icon size={14} className='shrink-0' />
-                <span className='truncate text-[10px] font-bold tracking-wide'>
-                  {name}
-                </span>
-              </div>
-              <span className='truncate text-xs font-semibold tabular-nums'>
-                {amount}
-              </span>
+        <div className='border-t border-primary-foreground/15 pt-3.5'>
+          {wallets.length === 0 && !loading ? (
+            <p className='text-xs text-primary-foreground/80'>
+              Belum ada dompet. Tambahkan dompet pertamamu di menu Lainnya.
+            </p>
+          ) : (
+            <div className='scrollbar-hidden flex gap-2 overflow-x-auto pb-0.5'>
+              {(loading ? Array.from({ length: 3 }, () => null) : wallets).map(
+                (wallet, index) => (
+                  <div
+                    key={wallet?.walletId ?? index}
+                    className='flex min-w-[96px] flex-1 flex-col gap-0.5 rounded-xl bg-primary-foreground/10 p-2.5 backdrop-blur-sm'
+                  >
+                    {wallet ? (
+                      <>
+                        <div className='flex items-center gap-1 text-primary-foreground/80'>
+                          <WalletIcon
+                            name={wallet.name}
+                            size='sm'
+                            className='size-4 bg-transparent text-primary-foreground/80'
+                          />
+                          <span className='truncate text-[10px] font-bold tracking-wide'>
+                            {wallet.name}
+                          </span>
+                        </div>
+                        <span className='truncate text-[11px] font-semibold tabular-nums'>
+                          {hidden ? "••••••" : formatCompactRupiah(wallet.balance)}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Skeleton className='h-2.5 w-14 bg-primary-foreground/20' />
+                        <Skeleton className='mt-1 h-3 w-20 bg-primary-foreground/20' />
+                      </>
+                    )}
+                  </div>
+                ),
+              )}
             </div>
-          ))}
+          )}
         </div>
       </div>
     </Card>

@@ -1,73 +1,30 @@
-import { formatRupiah } from "@/lib/format";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+} from "recharts";
+import { BarChart3 } from "lucide-react";
+import { EmptyState } from "@/components/app/common";
+import {
+  formatMonth,
+  formatMonthShort,
+  formatRupiah,
+} from "@/lib/format";
+import type { TrendPoint } from "@/types/api";
 
-// Bentuknya sama persis dengan item dari GET /reports/monthly-trend
-export type TrendPoint = {
-  month: string; // "2026-10"
-  income: number;
-  expense: number;
-  net: number;
-};
+export type { TrendPoint };
 
-// Data contoh (hard-coded). Nanti ganti dengan data dari API lewat props.
-const SAMPLE_DATA: TrendPoint[] = [
-  { month: "2026-01", income: 8500000, expense: 5120000, net: 3380000 },
-  { month: "2026-02", income: 8500000, expense: 4890000, net: 3610000 },
-  { month: "2026-03", income: 9700000, expense: 5340000, net: 4360000 },
-  { month: "2026-04", income: 8500000, expense: 6010000, net: 2490000 },
-  { month: "2026-05", income: 8500000, expense: 4760000, net: 3740000 },
-  { month: "2026-06", income: 8500000, expense: 5230000, net: 3270000 },
-  { month: "2026-07", income: 10500000, expense: 5480000, net: 5020000 },
-  { month: "2026-08", income: 8500000, expense: 4950000, net: 3550000 },
-  { month: "2026-09", income: 8500000, expense: 5670000, net: 2830000 },
-  { month: "2026-10", income: 8500000, expense: 3120000, net: 5380000 },
-  { month: "2026-11", income: 0, expense: 0, net: 0 },
-  { month: "2026-12", income: 0, expense: 0, net: 0 },
-];
-
-const BULAN = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "Mei",
-  "Jun",
-  "Jul",
-  "Agu",
-  "Sep",
-  "Okt",
-  "Nov",
-  "Des",
-];
-
-// "2026-10" -> "Okt"
-const labelBulan = (month: string) =>
-  BULAN[Number(month.slice(5, 7)) - 1] ?? month;
-
-// "2026-10" -> "Okt 2026"
-const labelPeriode = (month: string) =>
-  `${labelBulan(month)} ${month.slice(0, 4)}`;
-
-const bulanSekarang = () => {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-};
-
-const tinggiBar = (value: number, max: number) => {
-  if (value <= 0) return 0;
-  return Math.max(4, Math.round((value / max) * 100));
-};
-
-export function TrendChart({ data = SAMPLE_DATA }: { data?: TrendPoint[] }) {
-  if (data.length === 0) return null;
-
-  const max = Math.max(
-    1,
-    ...data.flatMap((point) => [point.income, point.expense]),
-  );
-  const aktif = bulanSekarang();
-  const periode = `${labelPeriode(data[0].month)} - ${labelPeriode(
-    data[data.length - 1].month,
-  )}`;
+export function TrendChart({
+  data,
+  loading,
+}: {
+  data: TrendPoint[];
+  loading?: boolean;
+}) {
+  const hasData = data.some((point) => point.income > 0 || point.expense > 0);
 
   return (
     <section className='rounded-2xl border border-border/50 bg-surface-container-lowest p-4 shadow-xs'>
@@ -77,7 +34,9 @@ export function TrendChart({ data = SAMPLE_DATA }: { data?: TrendPoint[] }) {
             Tren 12 Bulan
           </h2>
           <span className='text-[11px] text-muted-foreground'>
-            Periode {periode}
+            {data.length > 0
+              ? `${formatMonth(data[0].month)} - ${formatMonth(data[data.length - 1].month)}`
+              : "Belum ada periode"}
           </span>
         </div>
         <div className='flex shrink-0 items-center gap-2.5 text-[10px] font-semibold text-muted-foreground'>
@@ -92,71 +51,107 @@ export function TrendChart({ data = SAMPLE_DATA }: { data?: TrendPoint[] }) {
         </div>
       </div>
 
-      <div className='mt-4 flex h-32 items-end justify-between gap-1'>
-        {data.map((point) => {
-          const isActive = point.month === aktif;
-          const tooltip = `${labelPeriode(point.month)} — Masuk ${formatRupiah(
-            point.income,
-          )}, Keluar ${formatRupiah(point.expense)}`;
-
-          return (
-            <div
-              key={point.month}
-              title={tooltip}
-              aria-label={tooltip}
-              className={
-                isActive
-                  ? 'flex h-full flex-1 flex-col items-center justify-end rounded-xl bg-surface-container/70 px-0.5 py-1'
-                  : 'flex h-full flex-1 flex-col items-center justify-end'
-              }
-            >
-              {isActive && (
-                <span className='mb-1 text-[10px] leading-none font-bold text-primary'>
-                  Kini
-                </span>
-              )}
-
-              <div
-                className={
-                  isActive
-                    ? 'flex h-20 w-full items-end justify-center gap-1'
-                    : 'flex h-24 w-full items-end justify-center gap-0.5'
-                }
-              >
-                <div
-                  className={
-                    isActive
-                      ? 'w-2 rounded-t-sm bg-secondary shadow-sm'
-                      : 'w-1.5 rounded-t-sm bg-secondary/75'
-                  }
-                  style={{ height: `${tinggiBar(point.income, max)}%` }}
+      {loading ? (
+        <div className='mt-4 h-40 animate-pulse rounded-xl bg-surface-container' />
+      ) : hasData ? (
+        <>
+          <div className='mt-4 h-40 w-full'>
+            <ResponsiveContainer width='100%' height='100%'>
+              <BarChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+                <CartesianGrid
+                  vertical={false}
+                  stroke='var(--border)'
+                  strokeDasharray='3 3'
+                  opacity={0.6}
                 />
-                <div
-                  className={
-                    isActive
-                      ? 'w-2 rounded-t-sm bg-destructive shadow-sm'
-                      : 'w-1.5 rounded-t-sm bg-destructive/75'
-                  }
-                  style={{ height: `${tinggiBar(point.expense, max)}%` }}
+                <XAxis
+                  dataKey='month'
+                  axisLine={false}
+                  tickLine={false}
+                  interval={0}
+                  tick={{ fontSize: 9, fill: "var(--muted-foreground)" }}
+                  tickFormatter={(value: string) => formatMonthShort(value)}
                 />
-              </div>
+                <Tooltip
+                  cursor={{ fill: "var(--surface-container)", opacity: 0.6 }}
+                  contentStyle={{
+                    background: "var(--popover)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 12,
+                    fontSize: 11,
+                    color: "var(--popover-foreground)",
+                    boxShadow: "0 8px 24px -12px rgba(15,23,42,.25)",
+                  }}
+                  labelFormatter={(label) => formatMonth(String(label))}
+                  formatter={(value, name) => [
+                    formatRupiah(Number(value)),
+                    name === "income" ? "Masuk" : "Keluar",
+                  ]}
+                />
+                <Bar
+                  dataKey='income'
+                  name='income'
+                  fill='var(--secondary)'
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={9}
+                  isAnimationActive={false}
+                />
+                <Bar
+                  dataKey='expense'
+                  name='expense'
+                  fill='var(--destructive)'
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={9}
+                  isAnimationActive={false}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
 
-              <span
-                className={
-                  isActive
-                    ? 'mt-1.5 text-[10px] leading-none font-bold text-primary'
-                    : 'mt-2 text-[10px] leading-none text-muted-foreground'
-                }
-              >
-                {labelBulan(point.month)}
-              </span>
+          <details className='mt-3 border-t border-border/40 pt-2 text-[11px] text-muted-foreground'>
+            <summary className='cursor-pointer font-semibold text-primary'>
+              Lihat data tren
+            </summary>
+            <div className='mt-2 overflow-x-auto'>
+              <table className='w-full border-collapse text-left'>
+                <caption className='sr-only'>
+                  Data pemasukan dan pengeluaran 12 bulan
+                </caption>
+                <thead>
+                  <tr className='border-b border-border/50'>
+                    <th scope='col' className='py-1.5 pr-2 font-semibold'>Bulan</th>
+                    <th scope='col' className='py-1.5 pr-2 text-right font-semibold'>Masuk</th>
+                    <th scope='col' className='py-1.5 text-right font-semibold'>Keluar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((point) => (
+                    <tr key={point.month} className='border-b border-border/30 last:border-0'>
+                      <td className='py-1.5 pr-2'>{formatMonth(point.month)}</td>
+                      <td className='py-1.5 pr-2 text-right tabular-nums'>
+                        {formatRupiah(point.income)}
+                      </td>
+                      <td className='py-1.5 text-right tabular-nums'>
+                        {formatRupiah(point.expense)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          );
-        })}
-      </div>
+          </details>
+        </>
+      ) : (
+        <div className='mt-4'>
+          <EmptyState
+            icon={BarChart3}
+            title='Belum ada data tren'
+            description='Catat transaksi pertamamu untuk melihat grafik pemasukan dan pengeluaran.'
+          />
+        </div>
+      )}
     </section>
   );
 }
 
-// Contoh pemakaian di halaman: <TrendChart />
 export default TrendChart;
