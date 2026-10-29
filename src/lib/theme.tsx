@@ -60,6 +60,9 @@ export function ThemeProvider({
     const root = document.documentElement;
     root.classList.toggle("dark", resolvedTheme === "dark");
     root.style.colorScheme = resolvedTheme;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", resolvedTheme === "dark" ? "#0b1c30" : "#f8f9ff");
     try {
       window.localStorage.setItem(STORAGE_KEY, theme);
     } catch {

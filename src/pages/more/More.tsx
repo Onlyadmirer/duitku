@@ -4,6 +4,7 @@ import { useTheme } from "@/lib/theme";
 import {
   ChevronRight,
   Database,
+  Download,
   FileBarChart,
   Info,
   LogOut,
@@ -33,6 +34,7 @@ import {
   useTransactions,
   useWallets,
 } from "@/hooks/use-finance";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { USE_MOCK } from "@/lib/api";
 import { resetMockDB } from "@/lib/mock/data";
 import { initials } from "@/lib/format";
@@ -48,6 +50,8 @@ function MorePage() {
   const { resolvedTheme, setTheme } = useTheme();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const { canInstall, promptInstall } = usePwaInstall();
 
   const handleLogout = async () => {
     try {
@@ -63,6 +67,21 @@ function MorePage() {
     setResetting(true);
     resetMockDB();
     window.location.reload();
+  };
+
+  const handleInstall = async () => {
+    if (installing) return;
+    setInstalling(true);
+    try {
+      const outcome = await promptInstall();
+      if (outcome === "accepted") {
+        toast.success("Duitku berhasil dipasang.");
+      } else if (outcome === "dismissed") {
+        toast.info("Instalasi dibatalkan.");
+      }
+    } finally {
+      setInstalling(false);
+    }
   };
 
   const isDark = resolvedTheme === "dark";
@@ -157,6 +176,30 @@ function MorePage() {
             />
           </button>
         </div>
+
+        {canInstall && (
+          <button
+            type='button'
+            onClick={handleInstall}
+            disabled={installing}
+            className='flex items-center justify-between gap-3 rounded-2xl bg-surface-container-lowest p-4 text-left ring-1 ring-border/50 transition-colors hover:bg-surface-container-low/50 disabled:opacity-60'
+          >
+            <div className='flex items-center gap-3'>
+              <span className='flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary'>
+                <Download size={17} />
+              </span>
+              <div className='flex flex-col'>
+                <span className='text-sm font-semibold'>Instal aplikasi</span>
+                <span className='text-[10px] text-muted-foreground'>
+                  {installing
+                    ? "Menyiapkan instalasi..."
+                    : "Pasang Duitku di layar utama, akses lebih cepat"}
+                </span>
+              </div>
+            </div>
+            <ChevronRight size={16} className='shrink-0 text-muted-foreground' />
+          </button>
+        )}
 
         <div className='flex items-center justify-between gap-3 rounded-2xl bg-surface-container-lowest p-4 ring-1 ring-border/50'>
           <div className='flex items-center gap-3'>

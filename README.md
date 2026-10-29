@@ -94,6 +94,43 @@ Jangan mengisi `VITE_API_PROXY` di Vercel — variabel itu hanya dibaca oleh dev
 - `vercel.json` berfungsi sebagai proxy same-origin. Jangan mengganti `VITE_API_URL` menjadi URL API penuh kecuali backend mengirim cookie `SameSite=None; Secure` dan mengizinkan CORS domain frontend.
 - Jika domain API berubah, cukup ubah `destination` pada rewrite `/api/:path*`.
 
+## PWA
+
+Aplikasi dapat dipasang di layar utama (Android/Chrome, desktop, dan iOS lewat **Share → Add to Home Screen**).
+
+- `vite-plugin-pwa` membuat `manifest.webmanifest` dan service worker `sw.js` saat build.
+- Service worker hanya menyimpan app shell dan aset statis. Request `/api/*` **tidak pernah di-cache** agar data dan cookie autentikasi selalu segar.
+- Offline: aplikasi tetap terbuka, tetapi data keuangan memerlukan jaringan dan akan menampilkan error state.
+- Tombol **Lainnya → Instal aplikasi** muncul otomatis saat browser menawarkan pemasangan, dan disembunyikan jika aplikasi sudah berjalan dalam mode standalone.
+
+Service worker tidak aktif di `vite dev`. Untuk menguji PWA:
+
+```bash
+bun run build
+bun run preview
+```
+
+`vite preview` memakai proxy `VITE_API_PROXY` yang sama, jadi API tetap berfungsi saat pengujian lokal.
+
+### Ikon
+
+Ikon PWA dan favicon dibuat dari `public/image.png`:
+
+| File                              | Ukuran  | Kegunaan           |
+| --------------------------------- | ------- | ------------------ |
+| `public/icons/icon-192.png`       | 192×192 | Android/desktop    |
+| `public/icons/icon-512.png`       | 512×512 | Splash & install   |
+| `public/icons/icon-maskable-512.png` | 512×512 | Android adaptive |
+| `public/icons/apple-touch-icon.png`  | 180×180 | iOS home screen  |
+| `public/icons/favicon-32.png`     | 32×32   | Favicon browser    |
+
+Regenerasi ikon (butuh Python + Pillow):
+
+```bash
+pip install pillow
+python scripts/generate-icons.py
+```
+
 ## Integrasi API
 
 - Autentikasi memakai cookie `httpOnly`; frontend tidak membaca token dan selalu mengirim request dengan `withCredentials: true`.
