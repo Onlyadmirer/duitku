@@ -35,6 +35,8 @@ bun run dev       # atau npm run dev
 
 Buka `http://localhost:5173`.
 
+> `.env.example` hanyalah template. Vite hanya membaca `.env`, `.env.local`, dan varian per-mode, jadi konfigurasi harus ditulis di `.env`. Setelah mengubah env, hentikan dan jalankan ulang dev server.
+
 ### Akun demo
 
 - Email: `demo@duitku.id`
@@ -49,15 +51,48 @@ Data demo dapat dikembalikan ke kondisi awal lewat **Lainnya → Reset data demo
 | ----------------- | ------- | ----------------------------------------------------------------------- |
 | `VITE_USE_MOCK`   | `true`  | `false` untuk memakai API sungguhan.                                    |
 | `VITE_API_URL`    | `/api`  | Base URL API.                                                           |
-| `VITE_API_PROXY`  | —       | Opsional. Target proxy dev untuk request `/api`, mis. `http://localhost:3000`. |
+| `VITE_API_PROXY`  | —       | Opsional, **hanya untuk `vite dev`**. Target proxy request `/api`, mis. `http://localhost:3000`. Tidak dipakai saat build/preview. |
 
-Contoh mode API sungguhan:
+Contoh mode API sungguhan untuk development lokal:
 
 ```env
 VITE_USE_MOCK=false
 VITE_API_URL=/api
 VITE_API_PROXY=http://localhost:3000
 ```
+
+Dengan konfigurasi ini browser memanggil `/api` di origin yang sama, lalu Vite meneruskannya ke backend. Ini penting agar cookie `httpOnly` tetap dianggap first-party.
+
+## Deploy ke Vercel
+
+Repo ini menyertakan `vercel.json` yang:
+
+- meneruskan `/api/*` ke `https://duitku-api-psi.vercel.app/api/*`, sehingga request tetap same-origin dan cookie sesi ikut terkirim;
+- mengarahkan route lain ke `index.html` agar halaman seperti `/laporan` atau `/transaksi/$id` tidak 404 saat di-refresh.
+
+### Environment di dashboard Vercel
+
+Set untuk **Production** dan **Preview**:
+
+| Key             | Value   |
+| --------------- | ------- |
+| `VITE_USE_MOCK` | `false` |
+| `VITE_API_URL`  | `/api`  |
+
+Jangan mengisi `VITE_API_PROXY` di Vercel — variabel itu hanya dibaca oleh dev server. Nilai env ditanam saat build, jadi lakukan redeploy setelah mengubahnya.
+
+### Build settings
+
+- Framework Preset: **Vite**
+- Install Command: `bun install --frozen-lockfile`
+- Build Command: `bun run build`
+- Output Directory: `dist`
+- Node.js Version: 22.x
+
+### Catatan
+
+- `vercel.json` berfungsi sebagai proxy same-origin. Jangan mengganti `VITE_API_URL` menjadi URL API penuh kecuali backend mengirim cookie `SameSite=None; Secure` dan mengizinkan CORS domain frontend.
+- Jika domain API berubah, cukup ubah `destination` pada rewrite `/api/:path*`.
 
 ## Integrasi API
 

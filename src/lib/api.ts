@@ -23,7 +23,7 @@ import { currentMonth, MONTHS_LONG, MONTHS_SHORT } from "@/lib/format";
 import { mockAdapter } from "@/lib/mock/adapter";
 
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== "false";
-const baseURL = (import.meta.env.VITE_API_URL as string | undefined) ?? "/api";
+const baseURL = (import.meta.env.VITE_API_URL as string | undefined) || "/api";
 
 export class ApiError extends Error {
   code: string;
